@@ -1,6 +1,6 @@
 use crate::song::Instruction;
-use crate::song::NoteOptions;
 use crate::song::Instrument;
+use crate::song::NoteOptions;
 use crate::song::Segment;
 use crate::song::Song;
 
@@ -92,20 +92,20 @@ fn decode_note_length(value: u8) -> f64 {
     match value {
         0x0 => 0.5,
         0x1 => 0.55,
-        0x2	=> 0.66,
-        0x3	=> 0.66,
-        0x4	=> 1.0,
+        0x2 => 0.66,
+        0x3 => 0.66,
+        0x4 => 1.0,
         0x5 => 1.5,
         0x6 => 1.33,
         0x7 => 0.75,
         0x8 => 2.0,
-        0x9	=> 3.0,
-        0xa	=> 4.0,
-        0xb	=> 6.0,
-        0xc	=> 8.0,
-        0xd	=> 3.33,
-        0xe	=> 0.33,
-        0xf	=> panic!("Unsupported note length"),
+        0x9 => 3.0,
+        0xa => 4.0,
+        0xb => 6.0,
+        0xc => 8.0,
+        0xd => 3.33,
+        0xe => 0.33,
+        0xf => panic!("Unsupported note length"),
         _ => panic!("Invalid note length"),
     }
 }
@@ -129,7 +129,7 @@ fn decode_note_options(value: u8) -> NoteOptions {
     return NoteOptions {
         instrument: patch,
         duration: note_length,
-    }
+    };
 }
 
 fn decode_channel(bytes: Vec<u8>) -> Vec<Instruction> {
@@ -160,7 +160,6 @@ struct SongHeader {
 }
 
 impl SongHeader {
-
     fn load(rom: &Vec<u8>, starts_index: usize) -> Vec<SongHeader> {
         // TODO: take this as arg
         let ends_index = 234816 + 12;
@@ -169,7 +168,7 @@ impl SongHeader {
         let starts = rom[starts_index..starts_index + 12].to_vec();
         let ends = rom[ends_index..ends_index + 12].to_vec();
         let loops = rom[loops_index..loops_index + 12].to_vec();
-    
+
         let mut songs: Vec<SongHeader> = vec![];
 
         for i in 0..starts.len() {
@@ -183,7 +182,12 @@ impl SongHeader {
         return songs;
     }
 
-    fn to_song(&self, rom: &Vec<u8>, segment_headers_index: usize, segment_memory_offset: usize) -> Song {
+    fn to_song(
+        &self,
+        rom: &Vec<u8>,
+        segment_headers_index: usize,
+        segment_memory_offset: usize,
+    ) -> Song {
         let segment_headers = SegmentHeader::load(&rom, segment_headers_index);
         let song_to_header_index_address = segment_headers_index - 45;
         let song_index = &rom[song_to_header_index_address..song_to_header_index_address + 45];
@@ -198,11 +202,10 @@ impl SongHeader {
         }
 
         Song {
-            loop_index: song_index[self.loop_index as usize] /7,
+            loop_index: song_index[self.loop_index as usize] / 7,
             segments: segments,
         }
     }
-
 }
 
 #[derive(Debug)]
@@ -237,7 +240,9 @@ impl SegmentHeader {
             let start = segment_headers_index + (i * 7);
             let end = start + 7;
             let segment_bytes = &rom[start..end];
-            segment_headers.push(SegmentHeader::new(segment_bytes.try_into().expect("wrong length")));
+            segment_headers.push(SegmentHeader::new(
+                segment_bytes.try_into().expect("wrong length"),
+            ));
         }
         return segment_headers;
     }
@@ -269,7 +274,13 @@ impl SegmentHeader {
     }
 }
 
-pub fn decode_song(rom: &Vec<u8>, song_index: usize, song_headers_address: usize, segment_headers_address: usize, segment_memory_offset: usize) -> Song {
+pub fn decode_song(
+    rom: &Vec<u8>,
+    song_index: usize,
+    song_headers_address: usize,
+    segment_headers_address: usize,
+    segment_memory_offset: usize,
+) -> Song {
     let song_headers = SongHeader::load(&rom, song_headers_address);
     song_headers[song_index].to_song(&rom, segment_headers_address, segment_memory_offset)
 }

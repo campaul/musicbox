@@ -1,7 +1,7 @@
 #[derive(Debug)]
 pub enum Instrument {
     LongSquare,
-    ShortPiano, 
+    ShortPiano,
     ShortSquare,
     Square,
     Wavey,

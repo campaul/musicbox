@@ -1,5 +1,5 @@
-use crate::song::Segment;
 use crate::song::Instruction;
+use crate::song::Segment;
 use crate::song::Song;
 
 struct Note {
@@ -17,7 +17,7 @@ fn play_segment(segment: &Segment) {
         match instruction {
             Instruction::SetNoteOptions(o) => {
                 note_duration = o.duration * segment.tempo;
-            },
+            }
             Instruction::PlayNote(n) => {
                 if bending {
                     bending = false;
@@ -32,18 +32,18 @@ fn play_segment(segment: &Segment) {
                         duration: note_duration,
                     });
                 }
-            },
+            }
             Instruction::Rest => {
                 notes.push(Note {
                     value: String::from("Rest"),
                     duration: note_duration,
                 });
-            },
-            Instruction::End => {},
+            }
+            Instruction::End => {}
             Instruction::Bend => {
                 bending = true;
-            },
-        } 
+            }
+        }
     }
 
     for note in notes.iter() {
@@ -53,6 +53,6 @@ fn play_segment(segment: &Segment) {
 
 pub fn play_song(song: &Song) {
     for segment in song.segments.iter() {
-        play_segment(segment);       
-    }    
+        play_segment(segment);
+    }
 }

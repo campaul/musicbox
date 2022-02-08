@@ -1,11 +1,11 @@
-mod song;
 mod decoder;
 mod player;
+mod song;
 
+use std::env;
+use std::fs::File;
 use std::io;
 use std::io::prelude::*;
-use std::fs::File;
-use std::env;
 
 use decoder::decode_song;
 use player::play_song;
@@ -41,9 +41,15 @@ fn main() -> io::Result<()> {
     println!("Loading track {} from {}\n", track, filename);
 
     let rom = load_rom(filename.clone())?;
-    let song = decode_song(&rom, *track, SONG_HEADERS_ADDRESS, SEGMENT_HEADERS_ADDRESS, SEGMENT_MEMORY_OFFSET);
+    let song = decode_song(
+        &rom,
+        *track,
+        SONG_HEADERS_ADDRESS,
+        SEGMENT_HEADERS_ADDRESS,
+        SEGMENT_MEMORY_OFFSET,
+    );
 
     play_song(&song);
-        
+
     Ok(())
 }
