@@ -6,6 +6,7 @@ use crate::song::Song;
 
 fn decode_tempo(value: u8) -> f64 {
     match value {
+        0x00 => 0.275, // random guess
         0x10 => 0.250,
         0x20 => 0.233,
         0x30 => 0.2,
@@ -15,77 +16,77 @@ fn decode_tempo(value: u8) -> f64 {
         0x70 => 0.115,
         0x80 => 0.100,
         0x90 => 0.066,
-        _ => 0.0,
+        _ => panic!("Invalid tempo: {}", value),
     }
 }
 
-fn decode_note(value: u8) -> String {
-    String::from(match value {
-        0x02 => "c#2",
-        0x04 => "D2",
-        0x06 => "D#2",
-        0x08 => "E2",
-        0x0A => "F2",
-        0x0C => "F#2",
-        0x0E => "G2",
-        0x10 => "G#2",
-        0x12 => "A2",
-        0x14 => "A#2",
-        0x16 => "B2",
-        0x18 => "C3",
-        0x1A => "C#3",
-        0x1C => "D3",
-        0x1E => "D#3",
-        0x20 => "E3",
-        0x22 => "F3",
-        0x24 => "F#3",
-        0x26 => "G3",
-        0x28 => "G#3",
-        0x2A => "A3",
-        0x2C => "A#3",
-        0x2E => "B3",
-        0x30 => "C4",
-        0x32 => "C#4",
-        0x34 => "D4",
-        0x36 => "D#4",
-        0x38 => "E4",
-        0x3A => "F4",
-        0x3C => "F#4",
-        0x3E => "G4",
-        0x40 => "G#4",
-        0x42 => "A4",
-        0x44 => "A#4",
-        0x46 => "B4",
-        0x48 => "C5",
-        0x4A => "C#5",
-        0x4C => "D5",
-        0x4E => "D#5",
-        0x50 => "E5",
-        0x52 => "F5",
-        0x54 => "F#5",
-        0x56 => "G5",
-        0x58 => "G#5",
-        0x5A => "A5",
-        0x5C => "A#5",
-        0x5E => "B5",
-        0x60 => "C6",
-        0x62 => "C#6",
-        0x64 => "D6",
-        0x66 => "D#6",
-        0x68 => "E6",
-        0x6A => "F6",
-        0x6C => "F#6",
-        0x6E => "G6",
-        0x70 => "G#6",
-        0x72 => "A6",
-        0x74 => "A#6",
-        0x76 => "B6",
-        0x78 => "C7",
-        0x7A => "C#7",
-        0x7C => "D7",
-        0x7E => "blank",
-        _ => "Unknown Note",
-    })
+fn decode_note(value: u8) -> f32 {
+    match value {
+        0x02 => 69.30,   // C#2
+        0x04 => 73.42,   // D2
+        0x06 => 77.78,   // D#2
+        0x08 => 82.41,   // E2,
+        0x0A => 87.31,   // F2
+        0x0C => 92.50,   // F#2
+        0x0E => 98.00,   // G2
+        0x10 => 103.83,  // G#2
+        0x12 => 110.00,  // A2
+        0x14 => 116.54,  // A#2
+        0x16 => 123.46,  // B2
+        0x18 => 130.81,  // C3
+        0x1A => 138.59,  // C#3
+        0x1C => 146.83,  // D3
+        0x1E => 155.56,  // D#3
+        0x20 => 164.81,  // E3
+        0x22 => 174.61,  // F3
+        0x24 => 185.00,  // F#3
+        0x26 => 196.00,  // G3
+        0x28 => 207.65,  // G#3
+        0x2A => 220.00,  // A3
+        0x2C => 233.08,  // A#3
+        0x2E => 246.94,  // B3
+        0x30 => 261.63,  // C4
+        0x32 => 277.18,  // C#4
+        0x34 => 293.66,  // D4
+        0x36 => 331.13,  // D#4
+        0x38 => 329.63,  // E4
+        0x3A => 349.23,  // F4
+        0x3C => 369.99,  // F#4
+        0x3E => 392.00,  // G4
+        0x40 => 415.30,  // G#4
+        0x42 => 440.00,  // A4
+        0x44 => 466.15,  // A#4
+        0x46 => 493.88,  // B4
+        0x48 => 523.25,  // C5
+        0x4A => 554.37,  // C#5
+        0x4C => 587.33,  // D5
+        0x4E => 622.25,  // D#5
+        0x50 => 659.25,  // E5
+        0x52 => 698.46,  // F5
+        0x54 => 739.99,  // F#5
+        0x56 => 783.99,  // G5
+        0x58 => 830.61,  // G#5
+        0x5A => 880.00,  // A5
+        0x5C => 932.33,  // A#5
+        0x5E => 987.77,  // B5
+        0x60 => 1046.50, // C6
+        0x62 => 1108.73, // C#6
+        0x64 => 1174.66, // D6
+        0x66 => 1244.51, // D#6
+        0x68 => 1318.51, // E6
+        0x6A => 1396.91, // F6
+        0x6C => 1479.98, // F#6
+        0x6E => 1567.98, // G6
+        0x70 => 1661.22, // G#6
+        0x72 => 1760.00, // A6
+        0x74 => 1864.66, // A#6
+        0x76 => 1975.72, // B6
+        0x78 => 2093.00, // C7
+        0x7A => 2217.46, // C#7
+        0x7C => 2349.32, // D7
+        0x7E => 0.0,     // rest,
+        _ => panic!("Unknown note: {}", value),
+    }
 }
 
 fn decode_note_length(value: u8) -> f64 {
@@ -105,8 +106,8 @@ fn decode_note_length(value: u8) -> f64 {
         0xc => 8.0,
         0xd => 3.33,
         0xe => 0.33,
-        0xf => panic!("Unsupported note length"),
-        _ => panic!("Invalid note length"),
+        0xf => panic!("Unsupported note length: 0xf"),
+        _ => panic!("Invalid note length: {}", value),
     }
 }
 
@@ -123,7 +124,7 @@ fn decode_note_options(value: u8) -> NoteOptions {
         5 => Instrument::ShortPianoEcho,
         6 => Instrument::ShortPiano2,
         7 => Instrument::Pizzicato,
-        _ => panic!("Unknown Instrument"),
+        _ => panic!("Unknown instrument: {}", patch_number),
     };
 
     return NoteOptions {
@@ -236,7 +237,7 @@ impl SegmentHeader {
 
     fn load(rom: &Vec<u8>, segment_headers_index: usize) -> Vec<SegmentHeader> {
         let mut segment_headers: Vec<SegmentHeader> = vec![];
-        for i in 0..36 {
+        for i in 0..37 {
             let start = segment_headers_index + (i * 7);
             let end = start + 7;
             let segment_bytes = &rom[start..end];

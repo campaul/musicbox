@@ -1,16 +1,16 @@
+use rodio::source::{SineWave, Source};
+use rodio::{OutputStream, Sink};
+use std::time::Duration;
+
 use crate::song::Instruction;
 use crate::song::Segment;
 use crate::song::Song;
 
-struct Note {
-    value: String,
-    duration: f64,
-}
-
-fn play_segment(segment: &Segment) {
-    let mut notes: Vec<Note> = vec![];
+fn play_segment(segment: &Segment, out: &Sink) {
+    let mut notes = vec![];
     let mut note_duration = 0.0;
     let mut bending = false;
+    let volume: f32 = 0.20;
 
     for instruction in segment.square2.iter() {
         // TODO: maybe handle a bend instruction that isn't between notes
@@ -21,23 +21,27 @@ fn play_segment(segment: &Segment) {
             Instruction::PlayNote(n) => {
                 if bending {
                     bending = false;
-                    let old_note = notes.pop().unwrap();
-                    notes.push(Note {
-                        value: format!("{} -> {}", old_note.value, n),
-                        duration: note_duration,
-                    });
+                    // Just discard the start note
+                    notes.pop().unwrap();
+                    notes.push(
+                        SineWave::new(*n)
+                            .take_duration(Duration::from_secs_f64(note_duration))
+                            .amplify(volume),
+                    );
                 } else {
-                    notes.push(Note {
-                        value: n.to_string(),
-                        duration: note_duration,
-                    });
+                    notes.push(
+                        SineWave::new(*n)
+                            .take_duration(Duration::from_secs_f64(note_duration))
+                            .amplify(volume),
+                    );
                 }
             }
             Instruction::Rest => {
-                notes.push(Note {
-                    value: String::from("Rest"),
-                    duration: note_duration,
-                });
+                notes.push(
+                    SineWave::new(0.0)
+                        .take_duration(Duration::from_secs_f64(note_duration))
+                        .amplify(0.0),
+                );
             }
             Instruction::End => {}
             Instruction::Bend => {
@@ -46,13 +50,18 @@ fn play_segment(segment: &Segment) {
         }
     }
 
-    for note in notes.iter() {
-        println!("{} {}s", note.value, note.duration);
+    for note in notes.into_iter() {
+        out.append(note);
     }
 }
 
 pub fn play_song(song: &Song) {
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    let sink = Sink::try_new(&stream_handle).unwrap();
+
     for segment in song.segments.iter() {
-        play_segment(segment);
+        play_segment(segment, &sink);
     }
+
+    sink.sleep_until_end();
 }

@@ -19,7 +19,7 @@ pub struct NoteOptions {
 #[derive(Debug)]
 pub enum Instruction {
     SetNoteOptions(NoteOptions),
-    PlayNote(String),
+    PlayNote(f32),
     Rest,
     End,
     Bend,
