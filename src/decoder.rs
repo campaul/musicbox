@@ -89,23 +89,24 @@ fn decode_note(value: u8) -> f32 {
     }
 }
 
-fn decode_note_length(value: u8) -> f64 {
+fn decode_note_length(value: u8) -> u64 {
     match value {
-        0x0 => 0.5,
-        0x1 => 0.55,
-        0x2 => 0.66,
-        0x3 => 0.66,
-        0x4 => 1.0,
-        0x5 => 1.5,
-        0x6 => 1.33,
-        0x7 => 0.75,
-        0x8 => 2.0,
-        0x9 => 3.0,
-        0xa => 4.0,
-        0xb => 6.0,
-        0xc => 8.0,
-        0xd => 3.33,
-        0xe => 0.33,
+        // Divide these by 36 for playback
+        0x0 => 18, // 1/2
+        0x1 => 20, // 5/9
+        0x2 => 24, // 2/3
+        0x3 => 24, // 2/3 (maybe wrong)
+        0x4 => 36,
+        0x5 => 54, // 3/2
+        0x6 => 48, // 4/3
+        0x7 => 27, // 3/4
+        0x8 => 72,
+        0x9 => 108,
+        0xa => 144,
+        0xb => 216,
+        0xc => 288,
+        0xd => 120, // 10/3
+        0xe => 12,  // 1/3
         0xf => panic!("Unsupported note length: 0xf"),
         _ => panic!("Invalid note length: {}", value),
     }
@@ -133,24 +134,42 @@ fn decode_note_options(value: u8) -> NoteOptions {
     };
 }
 
-fn decode_channel(bytes: Vec<u8>) -> Vec<Instruction> {
+fn decode_channel(rom: Vec<u8>, start_address: usize, end_on: u64) -> (Vec<Instruction>, u64) {
     let mut instructions = vec![];
 
-    for value in bytes.into_iter() {
+    let mut duration = 0;
+    let mut total_duration = 0;
+    let mut i = start_address;
+
+    loop {
+        let value = rom[i];
+
         if value == 0x00 as u8 {
             instructions.push(Instruction::End);
+            break;
         } else if value >= 0x01 && value <= 0x7d {
-            instructions.push(Instruction::PlayNote(decode_note(value)))
+            instructions.push(Instruction::PlayNote(decode_note(value)));
+            total_duration = total_duration + duration;
         } else if value == 0x7e {
             instructions.push(Instruction::Rest);
+            total_duration = total_duration + duration;
         } else if value >= 0x80 && value <= 0xfe {
-            instructions.push(Instruction::SetNoteOptions(decode_note_options(value)));
+            let note_options = decode_note_options(value);
+            duration = note_options.duration;
+            instructions.push(Instruction::SetNoteOptions(note_options));
         } else if value == 0xff {
             instructions.push(Instruction::Bend);
+            total_duration = total_duration - duration;
         }
+
+        if end_on != 0 && total_duration >= end_on {
+            break;
+        }
+
+        i = i + 1;
     }
 
-    return instructions;
+    return (instructions, total_duration);
 }
 
 #[derive(Debug)]
@@ -251,24 +270,23 @@ impl SegmentHeader {
     fn to_segment(&self, rom: &Vec<u8>, segment_memory_offset: usize) -> Segment {
         let start_address = self.address as usize + segment_memory_offset;
 
-        let mut square2_data: Vec<u8> = vec![];
-        let mut i = 0;
-
-        loop {
-            let d = rom[start_address + i];
-            square2_data.push(d);
-            i = i + 1;
-
-            if d == 0 {
-                break;
-            }
-        }
+        let square2_instructions = decode_channel(rom.clone(), start_address, 0);
+        let square1_instructions = decode_channel(
+            rom.clone(),
+            start_address + self.square1_offset as usize,
+            square2_instructions.1,
+        );
+        let triangle_instructions = decode_channel(
+            rom.clone(),
+            start_address + self.triangle_offset as usize,
+            square2_instructions.1,
+        );
 
         Segment {
             tempo: decode_tempo(self.tempo),
-            square2: decode_channel(square2_data),
-            square1: vec![],
-            triangle: vec![],
+            square2: square2_instructions.0,
+            square1: square1_instructions.0,
+            triangle: triangle_instructions.0,
             noise: vec![],
             dcm: vec![],
         }

@@ -13,7 +13,8 @@ pub enum Instrument {
 #[derive(Debug)]
 pub struct NoteOptions {
     pub instrument: Instrument,
-    pub duration: f64,
+    // Duration in seconds * 36
+    pub duration: u64,
 }
 
 #[derive(Debug)]
