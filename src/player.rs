@@ -3,7 +3,6 @@ use rodio::{OutputStream, Sink};
 use std::time::Duration;
 
 use crate::song::Instruction;
-use crate::song::Segment;
 use crate::song::Song;
 
 fn play_segment(instructions: &Vec<Instruction>, tempo: f64, out: &Sink) {
